@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心情檢測站</title>
+    <style>
+        /* === 這裡設定網頁看起來的樣子 (CSS) === */
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            text-align: center; /* 讓所有東西置中 */
+            background-color: #f0f8ff; /* 淺藍色背景，看了心情好 */
+            padding-top: 50px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+        }
+
+        /* 按鈕的共通設定 */
+        .btn {
+            padding: 20px 40px;
+            font-size: 24px;
+            margin: 0 20px; /* 按鈕之間的距離 */
+            border: none;
+            border-radius: 50px; /* 圓角 */
+            cursor: pointer; /* 滑鼠變手指 */
+            transition: transform 0.1s, box-shadow 0.1s; /* 動畫過渡效果 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* 按下按鈕時的特效 */
+        .btn:active {
+            transform: scale(0.95); /* 稍微縮小 */
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 「好」按鈕的顏色 (綠色系) */
+        #good-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        /* 「不好」按鈕的顏色 (紅色系) */
+        #bad-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        /* === 圖片顯示區域的設定 === */
+        .image-container {
+            margin-top: 50px;
+            height: 400px; /* 固定高度，避免圖片跳出來時版面亂動 */
+            display: flex;           /* \ */
+            justify-content: center; /* > 這三行是為了讓圖片垂直水平置中 */
+            align-items: center;     /* / */
+        }
+
+        /* 圖片本身的設定 */
+        #result-image {
+            max-width: 90%;  /* 寬度最多佔 90% */
+            max-height: 100%; /* 高度最多佔滿容器 */
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            
+            /* ⚠️ 關鍵：一開始先隱藏起來！不然會出現一個叉叉圖案 */
+            display: none; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>你今天的心情怎麼樣？</h1>
+
+    <div>
+        <button id="good-btn" class="btn">好</button>
+        <button id="bad-btn" class="btn">不好</button>
+    </div>
+
+    <div class="image-container">
+        <img id="result-image" src="" alt="心情結果照片">
+    </div>
+
+
+    <script>
+        // 1. 告訴電腦照片的檔名 (如果你的檔名不一樣，請改這裡)
+        const dancePhotoName = 'jay happy.jpg';
+        const hospitalPhotoName = 'jay hospital.jpg';
+
+
+        // 2. 抓取網頁上的元素
+        const goodBtn = document.getElementById('good-btn');
+        const badBtn = document.getElementById('bad-btn');
+        const resultImg = document.getElementById('result-image');
+
+
+        // 3. 設定「好」按鈕被點擊時發生的事
+        goodBtn.addEventListener('click', function() {
+            // A. 把圖片的來源 (src) 改成跳舞照片
+            resultImg.src = dancePhotoName;
+            // B. 把原本隱藏的圖片顯示出來 (改成 block 或 inline-block)
+            resultImg.style.display = 'inline-block';
+            // C. (選用) 改一下圖片的描述文字
+            resultImg.alt = "開心的跳舞照片";
+        });
+
+
+        // 4. 設定「不好」按鈕被點擊時發生的事
+        badBtn.addEventListener('click', function() {
+            // A. 把圖片的來源改成住院照片
+            resultImg.src = hospitalPhotoName;
+            // B. 顯示圖片
+            resultImg.style.display = 'inline-block';
+            // C. 改描述文字
+            resultImg.alt = "難過的住院照片";
+        });
+
+    </script>
+
+</body>
+</html>
