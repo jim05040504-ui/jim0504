@@ -98,31 +98,52 @@
     <audio data-key="75" src="都沒再問.mp3"></audio>
 
     <script>
-        // 監聽整個網頁的「按鍵按下」事件
-        window.addEventListener('keydown', function(e) {
-            // 1. 抓到按下的是哪個鍵代碼 (keyCode)
-            // 比如說按下 D，e.keyCode 就是 68
-            const audio = document.querySelector(`audio[data-key="${e.keyCode}"]`);
-            const key = document.querySelector(`.pad[data-key="${e.keyCode}"]`);
+        // === 1. 定義一個「發出聲音 + 發光」的共用功能 ===
+        function playSound(keyCode) {
+            // 抓聲音檔
+            const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
+            // 抓按鈕方塊
+            const key = document.querySelector(`.pad[data-key="${keyCode}"]`);
 
-            // 如果按的鍵不在我們的設定內，就直接結束
+            // 如果找不到對應的聲音，就什麼都不做
             if (!audio) return;
 
-            // 2. 播放聲音
-            audio.currentTime = 0; // 讓聲音每次都從頭播放 (才可以連打)
+            // 播放聲音 (把時間歸零，這樣才可以連打)
+            audio.currentTime = 0;
             audio.play();
 
-            // 3. 加上 active 樣式 (讓它發光)
+            // 加上發光效果
             key.classList.add('active');
+
+            // 設定一個計時器：0.1 秒後自動移除發光 (這樣滑鼠點擊才會有回饋感)
+            setTimeout(function() {
+                key.classList.remove('active');
+            }, 100);
+        }
+
+
+        // === 2. 監聽「鍵盤」按下 (原本的功能) ===
+        window.addEventListener('keydown', function(e) {
+            playSound(e.keyCode);
         });
 
-        // 監聽「按鍵放開」事件 -> 移除發光
-        window.addEventListener('keyup', function(e) {
-            const key = document.querySelector(`.pad[data-key="${e.keyCode}"]`);
-            if (key) {
-                key.classList.remove('active');
-            }
+
+        // === 3. 監聽「滑鼠」點擊 (新功能！) ===
+        // 先抓出畫面上所有的方塊 (.pad)
+        const allPads = document.querySelectorAll('.pad');
+
+        // 幫每一個方塊都加上點擊偵測
+        allPads.forEach(function(pad) {
+            pad.addEventListener('click', function() {
+                // 抓取這個方塊身上藏的代碼 (data-key)
+                const keyCode = this.getAttribute('data-key');
+                // 呼叫播放功能
+                playSound(keyCode);
+            });
         });
+        
+        // (原本的 keyup 移除 active 我們改成用上面的 setTimeout 自動移除了，這樣比較簡單且通用)
+    </script>
     </script>
 
 </body>
