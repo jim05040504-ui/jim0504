@@ -18,11 +18,12 @@
         }
 
         .background {
+            
             position: absolute;
             top: 0;
             left: 0;
-            width: 50%;
-            height: 50%;
+            width: 20%;
+            height: 20%;
             background-image: url('爆氣.jpg'); /* 背景圖 */
             background-size: cover;
             background-position: center;
@@ -66,7 +67,7 @@
             position: absolute;
             bottom: 110px; /* 重要：這個高度是我們判定的基準 */
             width: 100%;
-            height: 5px;
+            height: 10px;
             background-color: #00d2ff;
             box-shadow: 0 0 15px #00d2ff;
             z-index: 5;
@@ -182,7 +183,7 @@
                 const distance = Math.abs(noteY - lineY);
 
                 // 判定範圍：距離在 60px 以內算 Perfect
-                if (distance < 60) {
+                if (distance < 80) {
                     // === 判定成功！ ===
                     hitSomething = true;
                     
@@ -275,7 +276,7 @@
                     { top: '110vh' }
                 ],
                 {
-                    duration: 2000, 
+                    duration: 5000, 
                     easing: 'linear'
                 }
             );
