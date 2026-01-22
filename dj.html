@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>痛飆 Mania (爆氣落下)</title>
+    <title>Web Mania (穩定修復版)</title>
     <style>
         /* === 1. 介面設定 === */
         body {
@@ -18,20 +18,19 @@
         }
 
         .background {
-            
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('爆氣.jpg'); /* 背景圖 */
+            background-image: url('爆氣.jpg'); /* 你的背景圖 */
             background-size: cover;
-            background-position: center top;
+            background-position: center;
             opacity: 0.3;
             z-index: -1;
         }
 
-        /* === 2. 分數與連擊顯示 === */
+        /* === 2. UI 層 (分數 + 滑桿) === */
         .ui-layer {
             position: absolute;
             top: 20px;
@@ -41,6 +40,14 @@
         }
         .score-board { font-size: 24px; color: #ffeb3b; }
         .combo-board { font-size: 40px; font-weight: bold; color: #00d2ff; margin-top: 10px;}
+        
+        /* 速度控制區 */
+        .speed-control {
+            margin-top: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 8px;
+        }
 
         /* === 3. 遊戲區 === */
         .game-area {
@@ -62,18 +69,16 @@
         }
         .track:last-child { border-right: none; }
 
-        /* 判定線 */
         .hit-line {
             position: absolute;
-            bottom: 110px; /* 重要：這個高度是我們判定的基準 */
+            bottom: 110px;
             width: 100%;
-            height: 10px;
+            height: 5px;
             background-color: #00d2ff;
             box-shadow: 0 0 15px #00d2ff;
             z-index: 5;
         }
 
-        /* 按鍵 */
         .pad {
             position: absolute;
             bottom: 10px;
@@ -89,10 +94,18 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
+            user-select: none;
+            cursor: pointer;
         }
         .pad.active { transform: scale(0.95); background-color: #fff; color: #000; box-shadow: 0 0 25px white; }
+        
+        /* 每個軌道不同色 */
+        .track:nth-child(2) .pad.active { box-shadow: 0 0 20px #ff4757; background-color: #ff4757; }
+        .track:nth-child(3) .pad.active { box-shadow: 0 0 20px #2ed573; background-color: #2ed573; }
+        .track:nth-child(4) .pad.active { box-shadow: 0 0 20px #eccc68; background-color: #eccc68; }
+        .track:nth-child(5) .pad.active { box-shadow: 0 0 20px #5352ed; background-color: #5352ed; }
 
-        /* === 4. 音符與判定特效 === */
+        /* === 4. 音符 === */
         .note {
             position: absolute;
             width: 80%;
@@ -101,23 +114,24 @@
             top: -50px;
             background-color: #ff6b81;
             border: 2px solid #fff;
-            /* 改用 JS 控制掉落，方便判定位置 */
+            box-shadow: 0 0 10px #ff6b81;
         }
-        .track:nth-child(3) .note, .track:nth-child(4) .note { background-color: #7bed9f; }
+        .track:nth-child(3) .note, .track:nth-child(4) .note { background-color: #7bed9f; box-shadow: 0 0 10px #7bed9f; }
 
-        /* 判定文字 (Perfect / Miss) */
+        /* 判定文字 */
         .judge-text {
             position: absolute;
-            top: 60%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 40px;
+            font-size: 50px;
             font-weight: bold;
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity 0.1s;
             z-index: 50;
+            pointer-events: none;
         }
-        .judge-text.show { opacity: 1; transform: translate(-50%, -60%); } /* 往上飄一點 */
+        .judge-text.show { opacity: 1; transform: translate(-50%, -60%); }
 
     </style>
 </head>
@@ -128,11 +142,12 @@
     <div class="ui-layer">
         <div class="score-board">Score: <span id="score">0</span></div>
         <div class="combo-board">Combo: <span id="combo">0</span></div>
-    </div>
-    <div style="margin-top: 10px;">
-    速度設定: <span id="speed-text">2.0</span> 秒
-    <br>
-    <input type="range" id="speed-control" min="500" max="3000" value="2000" step="100">
+        
+        <div class="speed-control">
+            <div>掉落時間: <span id="speed-text">2.0</span> 秒</div>
+            <input type="range" id="speed-input" min="500" max="3000" value="2000" step="100">
+            <div style="font-size: 12px; color: #aaa; margin-top: 5px;">(左快 - 右慢)</div>
+        </div>
     </div>
 
     <div id="judge-display" class="judge-text">PERFECT</div>
@@ -140,10 +155,18 @@
     <div class="game-area">
         <div class="hit-line" id="hit-line"></div>
 
-        <div class="track" id="track-0"><div class="pad" data-key="68">D</div></div>
-        <div class="track" id="track-1"><div class="pad" data-key="70">F</div></div>
-        <div class="track" id="track-2"><div class="pad" data-key="74">J</div></div>
-        <div class="track" id="track-3"><div class="pad" data-key="75">K</div></div>
+        <div class="track" id="track-0">
+            <div class="pad" data-key="68">D</div>
+        </div>
+        <div class="track" id="track-1">
+            <div class="pad" data-key="70">F</div>
+        </div>
+        <div class="track" id="track-2">
+            <div class="pad" data-key="74">J</div>
+        </div>
+        <div class="track" id="track-3">
+            <div class="pad" data-key="75">K</div>
+        </div>
     </div>
 
     <audio data-key="68" src="痛標.mp3"></audio>
@@ -152,86 +175,94 @@
     <audio data-key="75" src="都沒再問.mp3"></audio>
 
     <script>
-            // === 新增：速度控制變數 ===
-    let fallSpeed = 2000; // 預設 2000 毫秒 (2秒)
-    const speedInput = document.getElementById('speed-control');
-    const speedText = document.getElementById('speed-text');
-
-    // 當滑桿被拉動時，做兩件事：
-    speedInput.addEventListener('input', function() {
-    // 1. 更新變數：把滑桿的值存進 fallSpeed
-    // 注意：因為 input 抓回來是字串，我們要用 parseInt 轉成數字
-    fallSpeed = parseInt(this.value); 
-
-    // 2. 更新畫面文字：把毫秒除以 1000 變成秒數給玩家看
-    speedText.innerText = (fallSpeed / 1000).toFixed(1);
-});
-        // === 變數設定 ===
+        // === 全局變數 ===
         let score = 0;
         let combo = 0;
+        let fallSpeed = 2000; // 預設 2秒掉到底
+
         const scoreEl = document.getElementById('score');
         const comboEl = document.getElementById('combo');
         const judgeEl = document.getElementById('judge-display');
         const hitLine = document.getElementById('hit-line');
+        
+        // 滑桿監聽
+        const speedInput = document.getElementById('speed-input');
+        const speedText = document.getElementById('speed-text');
 
-        // 定義按鍵對應的軌道索引 (D=0, F=1, J=2, K=3)
+        speedInput.addEventListener('input', function() {
+            // 這裡只更新「掉落時間」的變數，絕對不要在這裡呼叫 setInterval！
+            fallSpeed = parseInt(this.value);
+            speedText.innerText = (fallSpeed / 1000).toFixed(1);
+        });
+
         const keyTrackMap = { 68: 0, 70: 1, 74: 2, 75: 3 };
 
-        // === 1. 核心判定功能 ===
+        // === 1. 產生音符 ===
+        function spawnNote() {
+            const randomTrack = Math.floor(Math.random() * 4);
+            const track = document.getElementById(`track-${randomTrack}`);
+            
+            const note = document.createElement('div');
+            note.classList.add('note');
+            track.appendChild(note);
+
+            // 這裡使用 fallSpeed 變數
+            const animation = note.animate(
+                [
+                    { top: '-50px' },
+                    { top: '110vh' }
+                ],
+                {
+                    duration: fallSpeed, // 使用滑桿控制的速度
+                    easing: 'linear'
+                }
+            );
+
+            // 動畫結束後的處理 (Miss)
+            animation.onfinish = () => {
+                if (note.isConnected) {
+                    combo = 0;
+                    updateUI();
+                    showJudge("MISS", "#ff5252");
+                    note.remove();
+                }
+            };
+        }
+
+        // === 2. 判定邏輯 ===
         function checkHit(keyCode) {
-            // 1. 找出是哪一條軌道
             const trackIndex = keyTrackMap[keyCode];
-            if (trackIndex === undefined) return; // 按錯鍵不管
+            if (trackIndex === undefined) return;
 
             const track = document.getElementById(`track-${trackIndex}`);
-            // 找出這條軌道上所有的音符
             const notes = track.querySelectorAll('.note');
-
-            // 取得判定線的 Y 軸位置 (在螢幕上的高度)
             const lineRect = hitLine.getBoundingClientRect();
-            const lineY = lineRect.top;
+            
+            let hit = false;
 
-            let hitSomething = false;
-
-            // 2. 檢查每一個音符的位置
+            // 檢查所有音符
             notes.forEach(note => {
                 const noteRect = note.getBoundingClientRect();
-                const noteY = noteRect.top;
+                const distance = Math.abs(noteRect.top - lineRect.top);
 
-                // 3. 計算距離：音符高度 - 判定線高度 (取絕對值)
-                const distance = Math.abs(noteY - lineY);
-
-                // 判定範圍：距離在 60px 以內算 Perfect
-                if (distance < 80) {
-                    // === 判定成功！ ===
-                    hitSomething = true;
-                    
-                    // 加分邏輯
+                // 距離小於 60px 算判定成功
+                if (distance < 60) {
+                    hit = true;
                     score += 100 + (combo * 10);
                     combo++;
-                    
-                    // 顯示特效
                     showJudge("PERFECT", "#ffeb3b");
-                    
-                    // 移除音符
-                    note.remove();
+                    note.remove(); // 移除音符
                 }
             });
 
-            // 如果按了鍵但沒有按到任何音符 -> Miss (斷連擊)
-            // 這裡為了簡單，我們先不嚴格扣分，只處理斷連擊
-            /*
-            if (!hitSomething && notes.length > 0) {
-                 combo = 0;
-                 showJudge("MISS", "#ff5252");
+            if (!hit && notes.length > 0) {
+                // 這裡可以寫按錯扣分，暫時先不寫
             }
-            */
 
             updateUI();
-            return hitSomething; // 回傳是否有按到
         }
 
-        // === UI 更新 ===
+        // === 3. 更新畫面 ===
         function updateUI() {
             scoreEl.innerText = score;
             comboEl.innerText = combo;
@@ -241,28 +272,19 @@
             judgeEl.innerText = text;
             judgeEl.style.color = color;
             judgeEl.classList.add('show');
-            
-            // 0.2秒後消失
-            setTimeout(() => {
-                judgeEl.classList.remove('show');
-            }, 200);
+            setTimeout(() => judgeEl.classList.remove('show'), 200);
         }
 
-        // === 2. 按鍵與聲音 (結合判定) ===
+        // === 4. 輸入監聽 ===
         function handleInput(keyCode) {
-            const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
             const key = document.querySelector(`.pad[data-key="${keyCode}"]`);
-
-            if (!key) return;
-
-            // 視覺特效 (按鈕發光)
-            key.classList.add('active');
-            setTimeout(() => key.classList.remove('active'), 100);
-
-            // 執行判定！
-            const isHit = checkHit(keyCode);
-
-            // 如果判定成功，或者是單純想發出聲音
+            const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
+            
+            if (key) {
+                key.classList.add('active');
+                setTimeout(() => key.classList.remove('active'), 100);
+                checkHit(keyCode);
+            }
             if (audio) {
                 audio.currentTime = 0;
                 audio.play();
@@ -270,53 +292,18 @@
         }
 
         window.addEventListener('keydown', e => handleInput(e.keyCode));
-
-        // 滑鼠點擊支援
-        document.querySelectorAll('.pad').forEach(pad => {
-            pad.addEventListener('click', function() {
+        
+        document.querySelectorAll('.pad').forEach(p => {
+            p.addEventListener('click', function() {
                 handleInput(this.getAttribute('data-key'));
             });
         });
 
-        // === 3. 掉落系統 (改用 JS 動畫以配合判定) ===
-        function spawnNote() {
-            const randomTrackIndex = Math.floor(Math.random() * 4);
-            const track = document.getElementById(`track-${randomTrackIndex}`);
-
-            const note = document.createElement('div');
-            note.classList.add('note');
-            track.appendChild(note);
-
-            // 使用 Web Animations API 讓它掉落 (這樣寫效能比較好)
-            // 2000ms = 2秒掉到底
-            const animation = note.animate(
-                [
-                    { top: '-50px' },
-                    { top: '110vh' }
-                ],
-                {
-                    duration: fallSpeed,
-                    easing: 'linear'
-                }
-            );
-
-            // 當動畫結束 (掉出螢幕)
-            animation.onfinish = () => {
-                // 如果音符還在 (沒被按掉)，代表漏接了 -> Miss
-                if (note.isConnected) {
-                    combo = 0; // 斷連擊
-                    updateUI();
-                    showJudge("MISS", "#ff5252");
-                    note.remove();
-                }
-            };
-        }
-
-        // 每 0.2 秒掉一個
-        setInterval(spawnNote, 0.5
-        );
+        // === 5. 遊戲迴圈 (關鍵！) ===
+        // 我們只設定一個計時器，固定 0.4 秒產生一個
+        // 千萬不要把這個放進 input 事件裡！
+        setInterval(spawnNote, 400);
 
     </script>
-
 </body>
 </html>
