@@ -2,12 +2,12 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Mania (爆氣落下版)</title>
+    <title>Web Mania (修復按鍵版)</title>
     <style>
         /* === 1. 遊戲基礎設定 === */
         body {
             margin: 0;
-            overflow: hidden; /* 防止視窗出現捲動條 */
+            overflow: hidden;
             background-color: #000;
             display: flex;
             justify-content: center;
@@ -16,104 +16,118 @@
             font-family: Arial, sans-serif;
         }
 
-        /* 背景圖片層 (你的傑倫跳舞圖) */
+        /* 背景圖片層 */
         .background {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('爆氣.jpg'); /* 確保這裡檔名對 */
+            background-image: url('爆氣.jpg'); /* 背景圖 */
             background-size: cover;
             background-position: center;
-            opacity: 0.3; /* 讓背景暗一點，才看得到音符 */
+            opacity: 0.3; /* 暗一點 */
             z-index: -1;
         }
 
-        /* === 2. 軌道區域 === */
+        /* === 2. 遊戲主區域 (軌道) === */
         .game-area {
-            width: 400px; /* 遊戲區總寬度 */
+            width: 400px;
             height: 100vh;
             display: flex;
             position: relative;
-            background: rgba(0, 0, 0, 0.6); /* 半透明黑底 */
-            border-left: 3px solid #fff;
-            border-right: 3px solid #fff;
+            background: rgba(0, 0, 0, 0.5);
+            border-left: 4px solid #fff;
+            border-right: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
         /* 每一條軌道 */
         .track {
-            flex: 1; /* 四條平分 */
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            flex: 1; /* 平分寬度 */
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
             position: relative;
+            display: flex;
+            justify-content: center; /* 讓內容居中 */
         }
-        /* 移除最後一條線 */
         .track:last-child { border-right: none; }
 
-        /* === 3. 判定線 === */
+        /* === 3. 判定線 (那條藍色的線) === */
         .hit-line {
             position: absolute;
-            bottom: 120px; /* 判定線高度 */
+            bottom: 110px; /* 線的高度 */
             width: 100%;
             height: 5px;
-            background-color: #00d2ff; /* 青色判定線 */
-            box-shadow: 0 0 10px #00d2ff;
-            z-index: 10;
+            background-color: #00d2ff;
+            box-shadow: 0 0 15px #00d2ff;
+            z-index: 5;
         }
 
-        /* === 4. 按鈕設計 (原本的方塊改到下面) === */
+        /* === 4. 按鍵本體 (修復重點：讓它超明顯！) === */
         .pad {
             position: absolute;
-            bottom: 20px;
-            left: 5px;
-            right: 5px;
-            height: 80px;
-            border: 2px solid #aaa;
-            border-radius: 8px;
+            bottom: 10px; /* 固定在最下面 */
+            width: 80%;   /* 寬度佔軌道的 80% */
+            height: 80px; /* 高度 */
+            
+            /* 視覺設計：明顯的方塊 */
+            border: 3px solid #fff; 
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.2); /* 預設有一點灰底 */
             color: #fff;
-            font-size: 30px;
-            font-weight: bold;
+            
+            /* 文字設定 */
+            font-size: 36px;
+            font-weight: 900;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.05s;
-            background: rgba(255, 255, 255, 0.1);
             cursor: pointer;
+            z-index: 10; /* 確保它在最上層 */
+            user-select: none;
         }
 
-        /* 按下去的特效 (沿用你的顏色設定) */
-        .pad.active { transform: scale(0.95); color: #000; box-shadow: 0 0 20px white; border-color: white;}
+        /* 按下去的特效 (變色 + 發光) */
+        .pad.active {
+            transform: scale(0.95);
+            color: #000;
+            background-color: #fff;
+            box-shadow: 0 0 25px white;
+            border-color: #fff;
+        }
         
-        /* 針對不同軌道給不同顏色亮光 */
-        .track:nth-child(2) .pad.active { background-color: #ff4757; } /* D */
-        .track:nth-child(3) .pad.active { background-color: #2ed573; } /* F */
-        .track:nth-child(4) .pad.active { background-color: #eccc68; } /* J */
-        .track:nth-child(5) .pad.active { background-color: #5352ed; } /* K */
+        /* 針對不同軌道給不同顏色的光 */
+        .track:nth-child(2) .pad.active { background-color: #ff4757; box-shadow: 0 0 20px #ff4757; } /* D */
+        .track:nth-child(3) .pad.active { background-color: #2ed573; box-shadow: 0 0 20px #2ed573; } /* F */
+        .track:nth-child(4) .pad.active { background-color: #eccc68; box-shadow: 0 0 20px #eccc68; } /* J */
+        .track:nth-child(5) .pad.active { background-color: #5352ed; box-shadow: 0 0 20px #5352ed; } /* K */
 
         /* === 5. 掉落音符 (Note) === */
         .note {
             position: absolute;
-            width: 90%;
-            height: 20px; /* 音符厚度 */
-            left: 5%;
+            width: 80%; /* 跟按鍵一樣寬 */
+            height: 25px;
+            border-radius: 5px;
+            top: -50px;
+            
+            /* 顏色 */
             background-color: #ff6b81;
-            border-radius: 4px;
-            top: -50px; /* 從螢幕上面開始 */
-            box-shadow: 0 0 5px #ff6b81;
-            /* 讓它掉下來的動畫：2秒掉到底 */
-            animation: fallDown 2s linear forwards; 
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px #ff6b81;
+            
+            /* 動畫 */
+            animation: fallDown 2s linear forwards;
         }
 
-        /* 中間軌道音符改綠色 */
+        /* 中間兩軌換顏色 */
         .track:nth-child(3) .note, .track:nth-child(4) .note {
             background-color: #7bed9f;
-            box-shadow: 0 0 5px #7bed9f;
+            box-shadow: 0 0 10px #7bed9f;
         }
 
-        /* 定義掉落動畫 */
         @keyframes fallDown {
             from { top: -50px; }
-            to { top: 100vh; }
+            to { top: 110vh; }
         }
     </style>
 </head>
@@ -125,4 +139,74 @@
         <div class="hit-line"></div>
 
         <div class="track">
-            <div
+            <div class="pad" data-key="68">D</div>
+        </div>
+        <div class="track">
+            <div class="pad" data-key="70">F</div>
+        </div>
+        <div class="track">
+            <div class="pad" data-key="74">J</div>
+        </div>
+        <div class="track">
+            <div class="pad" data-key="75">K</div>
+        </div>
+    </div>
+
+    <audio data-key="68" src="痛標.mp3"></audio>
+    <audio data-key="70" src="擺爛的擺爛.mp3"></audio>
+    <audio data-key="74" src="爛船都有三分低.mp3"></audio>
+    <audio data-key="75" src="都沒再問.mp3"></audio>
+
+    <script>
+        // === 共用功能：播放聲音 + 按鍵發光 ===
+        function playSound(keyCode) {
+            const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
+            const key = document.querySelector(`.pad[data-key="${keyCode}"]`);
+
+            if (!audio || !key) return;
+
+            // 聲音重置並播放
+            audio.currentTime = 0;
+            audio.play();
+
+            // 視覺特效
+            key.classList.add('active');
+            setTimeout(() => key.classList.remove('active'), 100);
+        }
+
+        // 1. 鍵盤監聽
+        window.addEventListener('keydown', function(e) {
+            playSound(e.keyCode);
+        });
+
+        // 2. 滑鼠/觸控監聽
+        const allPads = document.querySelectorAll('.pad');
+        allPads.forEach(function(pad) {
+            pad.addEventListener('click', function() {
+                const keyCode = this.getAttribute('data-key');
+                playSound(keyCode);
+            });
+        });
+
+        // 3. 自動掉落音符系統
+        function spawnNote() {
+            const tracks = document.querySelectorAll('.track');
+            const randomTrackIndex = Math.floor(Math.random() * 4);
+            const targetTrack = tracks[randomTrackIndex];
+
+            const note = document.createElement('div');
+            note.classList.add('note');
+            targetTrack.appendChild(note);
+
+            setTimeout(() => {
+                note.remove();
+            }, 2000);
+        }
+
+        // 每 0.4 秒掉一個
+        setInterval(spawnNote, 400);
+
+    </script>
+
+</body>
+</html>
