@@ -129,6 +129,11 @@
         <div class="score-board">Score: <span id="score">0</span></div>
         <div class="combo-board">Combo: <span id="combo">0</span></div>
     </div>
+    <div style="margin-top: 10px;">
+    速度設定: <span id="speed-text">2.0</span> 秒
+    <br>
+    <input type="range" id="speed-control" min="500" max="3000" value="2000" step="100">
+    </div>
 
     <div id="judge-display" class="judge-text">PERFECT</div>
 
@@ -147,6 +152,20 @@
     <audio data-key="75" src="都沒再問.mp3"></audio>
 
     <script>
+            // === 新增：速度控制變數 ===
+    let fallSpeed = 2000; // 預設 2000 毫秒 (2秒)
+    const speedInput = document.getElementById('speed-control');
+    const speedText = document.getElementById('speed-text');
+
+    // 當滑桿被拉動時，做兩件事：
+    speedInput.addEventListener('input', function() {
+    // 1. 更新變數：把滑桿的值存進 fallSpeed
+    // 注意：因為 input 抓回來是字串，我們要用 parseInt 轉成數字
+    fallSpeed = parseInt(this.value); 
+
+    // 2. 更新畫面文字：把毫秒除以 1000 變成秒數給玩家看
+    speedText.innerText = (fallSpeed / 1000).toFixed(1);
+});
         // === 變數設定 ===
         let score = 0;
         let combo = 0;
@@ -276,7 +295,7 @@
                     { top: '110vh' }
                 ],
                 {
-                    duration: 5000, 
+                    duration: fallSpeed,
                     easing: 'linear'
                 }
             );
