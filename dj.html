@@ -2,150 +2,127 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>爆氣發聲器</title>
+    <title>Mania (爆氣落下版)</title>
     <style>
+        /* === 1. 遊戲基礎設定 === */
         body {
-            
-            background-color: #1a1a1a; /* 深色背景比較帥 */
-            color: white;
+            margin: 0;
+            overflow: hidden; /* 防止視窗出現捲動條 */
+            background-color: #000;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh; /* 滿版高度 */
-            font-family: sans-serif;
-            flex-direction: column;
+            height: 100vh;
+            font-family: Arial, sans-serif;
         }
 
-        h1 { margin-bottom: 50px; text-shadow: 0 0 10px #fff; }
+        /* 背景圖片層 (你的傑倫跳舞圖) */
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('爆氣.jpg'); /* 確保這裡檔名對 */
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3; /* 讓背景暗一點，才看得到音符 */
+            z-index: -1;
+        }
 
-        .container {
+        /* === 2. 軌道區域 === */
+        .game-area {
+            width: 400px; /* 遊戲區總寬度 */
+            height: 100vh;
             display: flex;
-            gap: 20px; /* 按鈕之間的距離 */
+            position: relative;
+            background: rgba(0, 0, 0, 0.6); /* 半透明黑底 */
+            border-left: 3px solid #fff;
+            border-right: 3px solid #fff;
         }
 
-        /* 按鈕方塊的設計 */
+        /* 每一條軌道 */
+        .track {
+            flex: 1; /* 四條平分 */
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+        /* 移除最後一條線 */
+        .track:last-child { border-right: none; }
+
+        /* === 3. 判定線 === */
+        .hit-line {
+            position: absolute;
+            bottom: 120px; /* 判定線高度 */
+            width: 100%;
+            height: 5px;
+            background-color: #00d2ff; /* 青色判定線 */
+            box-shadow: 0 0 10px #00d2ff;
+            z-index: 10;
+        }
+
+        /* === 4. 按鈕設計 (原本的方塊改到下面) === */
         .pad {
-            width: 100px;
-            height: 100px;
-            border: 2px solid #555;
-            border-radius: 10px;
+            position: absolute;
+            bottom: 20px;
+            left: 5px;
+            right: 5px;
+            height: 80px;
+            border: 2px solid #aaa;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.1s; /* 讓變化有過渡效果 */
+            transition: all 0.05s;
             background: rgba(255, 255, 255, 0.1);
-            user-select: none; /* 防止一直選取到文字 */
+            cursor: pointer;
         }
 
-        /* 說明文字 */
-        .key-hint {
-            font-size: 16px;
-            color: #aaa;
-            margin-top: 5px;
-        }
-
-        /* === 按下去的時候要有特效 (class active) === */
+        /* 按下去的特效 (沿用你的顏色設定) */
+        .pad.active { transform: scale(0.95); color: #000; box-shadow: 0 0 20px white; border-color: white;}
         
-        /* D 鍵 - 螢光紅 */
-        .pad.d.active {
-            background-color: #ff4757;
-            box-shadow: 0 0 20px #ff4757;
-            transform: scale(0.95); /* 按下去稍微縮小 */
-            border-color: #ff4757;
-        }
-        
-        /* F 鍵 - 螢光藍 */
-        .pad.f.active {
-            background-color: #2ed573;
-            box-shadow: 0 0 20px #2ed573;
-            transform: scale(0.95);
-            border-color: #2ed573;
+        /* 針對不同軌道給不同顏色亮光 */
+        .track:nth-child(2) .pad.active { background-color: #ff4757; } /* D */
+        .track:nth-child(3) .pad.active { background-color: #2ed573; } /* F */
+        .track:nth-child(4) .pad.active { background-color: #eccc68; } /* J */
+        .track:nth-child(5) .pad.active { background-color: #5352ed; } /* K */
+
+        /* === 5. 掉落音符 (Note) === */
+        .note {
+            position: absolute;
+            width: 90%;
+            height: 20px; /* 音符厚度 */
+            left: 5%;
+            background-color: #ff6b81;
+            border-radius: 4px;
+            top: -50px; /* 從螢幕上面開始 */
+            box-shadow: 0 0 5px #ff6b81;
+            /* 讓它掉下來的動畫：2秒掉到底 */
+            animation: fallDown 2s linear forwards; 
         }
 
-        /* J 鍵 - 螢光黃 */
-        .pad.j.active {
-            background-color: #eccc68;
-            box-shadow: 0 0 20px #eccc68;
-            transform: scale(0.95);
-            border-color: #eccc68;
+        /* 中間軌道音符改綠色 */
+        .track:nth-child(3) .note, .track:nth-child(4) .note {
+            background-color: #7bed9f;
+            box-shadow: 0 0 5px #7bed9f;
         }
 
-        /* K 鍵 - 螢光紫 */
-        .pad.k.active {
-            background-color: #5352ed;
-            box-shadow: 0 0 20px #5352ed;
-            transform: scale(0.95);
-            border-color: #5352ed;
+        /* 定義掉落動畫 */
+        @keyframes fallDown {
+            from { top: -50px; }
+            to { top: 100vh; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Web Launchpad (按鍵盤 D F J K)</h1>
+    <div class="background"></div>
 
-    <div class="container">
-        <div class="pad d" data-key="68">D</div>
-        <div class="pad f" data-key="70">F</div>
-        <div class="pad j" data-key="74">J</div>
-        <div class="pad k" data-key="75">K</div>
-    </div>
+    <div class="game-area">
+        <div class="hit-line"></div>
 
-    <audio data-key="68" src="痛標.mp3"></audio>
-    <audio data-key="70" src="擺爛的擺爛.mp3"></audio>
-    <audio data-key="74" src="爛船都有三分低.mp3"></audio>
-    <audio data-key="75" src="都沒再問.mp3"></audio>
-
-    <script>
-        // === 1. 定義一個「發出聲音 + 發光」的共用功能 ===
-        function playSound(keyCode) {
-            // 抓聲音檔
-            const audio = document.querySelector(`audio[data-key="${keyCode}"]`);
-            // 抓按鈕方塊
-            const key = document.querySelector(`.pad[data-key="${keyCode}"]`);
-
-            // 如果找不到對應的聲音，就什麼都不做
-            if (!audio) return;
-
-            // 播放聲音 (把時間歸零，這樣才可以連打)
-            audio.currentTime = 0;
-            audio.play();
-
-            // 加上發光效果
-            key.classList.add('active');
-
-            // 設定一個計時器：0.1 秒後自動移除發光 (這樣滑鼠點擊才會有回饋感)
-            setTimeout(function() {
-                key.classList.remove('active');
-            }, 100);
-        }
-
-
-        // === 2. 監聽「鍵盤」按下 (原本的功能) ===
-        window.addEventListener('keydown', function(e) {
-            playSound(e.keyCode);
-        });
-
-
-        // === 3. 監聽「滑鼠」點擊 (新功能！) ===
-        // 先抓出畫面上所有的方塊 (.pad)
-        const allPads = document.querySelectorAll('.pad');
-
-        // 幫每一個方塊都加上點擊偵測
-        allPads.forEach(function(pad) {
-            pad.addEventListener('click', function() {
-                // 抓取這個方塊身上藏的代碼 (data-key)
-                const keyCode = this.getAttribute('data-key');
-                // 呼叫播放功能
-                playSound(keyCode);
-            });
-        });
-        
-        // (原本的 keyup 移除 active 我們改成用上面的 setTimeout 自動移除了，這樣比較簡單且通用)
-    </script>
-    </script>
-
-</body>
-</html>
+        <div class="track">
+            <div
